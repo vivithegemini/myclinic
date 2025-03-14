@@ -5,7 +5,7 @@ pipeline {
   jdk 'JAVA_HOME'  
   }
 
-  env{
+  environment{
     GIT_PROJECT_URL = 'https://github.com/vivithegemini/myclinic.git'
     GIT_CRED = 'github-creds'
 

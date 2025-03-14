@@ -13,6 +13,12 @@ pipeline {
     SONAQUBE_INSTALLATION = 'sonar-server'
     SCANNER_HOME = tool 'sonar-env'
     APP_NAME = 'pipeline-pet-clinic-vivi'
+    JFROG_CRED = 'jfrog-creds'
+    ARTIFACTPATH = 'target/*.jar'
+    ARTIFACTTARGETPATH = 'release_${BUILD_ID}.jar'
+    ARTIFACTORY_URL = 'http://3.235.154.93:8082/artifactory/'
+    REPO = 'myclinic'
+
 
 
   }
@@ -50,5 +56,31 @@ pipeline {
               }
             }
         }
+        stage('Code Package'){
+            steps{
+                sh 'mvn package'
+            }
+        }
+      
+        stage('Upload Jar to Jfrog'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: "${JFROG_CRED}", \
+                 usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    script {
+                        // Define the artifact path and target location
+                        //def artifactPath = 'target/*.jar'
+                        //def targetPath = "release_${BUILD_ID}.jar"
+
+                        // Upload the artifact using curl
+                        sh """
+                            curl -u ${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD} \
+                                 -T ${ARTIFACTPATH} \
+                                 ${ARTIFACTORY_URL}/${REPO}/${ARTIFACTTARGETPATH}
+                        """
+            }
+        }
+    }
+
+}
   }
 }

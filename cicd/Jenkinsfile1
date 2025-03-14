@@ -17,7 +17,7 @@ pipeline {
     JFROG_CRED = 'jfrog-creds'
     ARTIFACTPATH = 'target/*.jar'
     ARTIFACTTARGETPATH = 'release_${BUILD_ID}.jar'
-    ARTIFACTORY_URL = 'http://3.235.154.93:8082/artifactory/'
+    ARTIFACTORY_URL = 'http://3.235.154.93:8082/artifactory'
     REPO = 'myclinic'
     IMAGE_ECR_REPO = 'myclinic'
 

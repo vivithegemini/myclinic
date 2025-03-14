@@ -1,0 +1,23 @@
+pipeline {
+  agent any
+  tools {
+  maven 'M2_HOME'
+  jdk 'JAVA_HOME'  
+  }
+
+  env {
+    GIT_PROJECT_URL = 'https://github.com/vivithegemini/myclinic.git'
+    GIT_CRED = 'github-creds'
+
+  }
+  stages{
+    stage('Git checkout'){
+        steps{
+            git branch: "${BRANCH_NAME}", credentialsId: "${GIT_CRED}", \
+                url: "${GIT_PROJECT_URL}"
+        }
+    }
+  }
+
+
+}

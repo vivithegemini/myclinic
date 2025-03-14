@@ -10,7 +10,7 @@ pipeline {
     GIT_PROJECT_URL = 'https://github.com/vivithegemini/myclinic.git'
     GIT_CRED = 'github-creds'
     SONAQUBE_CRED = 'sonarqube-credes'
-    SONAQUBE_INSTALLATION = 'sonar-env'
+    SONAQUBE_INSTALLATION = 'sonar-server'
     SCANNER_HOME = tool 'sonar-env'
     APP_NAME = 'pipeline-pet-clinic-vivi'
 

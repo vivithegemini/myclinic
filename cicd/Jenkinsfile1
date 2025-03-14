@@ -6,6 +6,7 @@ pipeline {
   }
 
   environment{
+    AWS_REGION = 'us-east-1'
     BRANCH_NAME = 'main'
     GIT_PROJECT_URL = 'https://github.com/vivithegemini/myclinic.git'
     GIT_CRED = 'github-creds'

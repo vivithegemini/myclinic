@@ -1,0 +1,115 @@
+pipeline {
+   agent any
+
+   tools {
+    maven 'M2_HOME'  // /opt/maven
+    jdk 'JAVA_HOME'  
+   }
+
+   environment{
+    AWS_REGION = 'us-east-1'
+    IMAGE_ECR_REPO = '376129840399.dkr.ecr.us-east-1.amazonaws.com/jenkins-ci'
+    ECR_REPO = '376129840399.dkr.ecr.us-east-1.amazonaws.com'
+    BRANCH_NAME = 'main'
+    GIT_CRED = 'github-creds'
+    GIT_PROJECT_URL = 'https://github.com/vivithegemini/petclinic-java.git'
+    SONAQUBE_CRED = 'sonarqube-credes'
+    SONAQUBE_INSTALLATION = 'sonar-server'
+    APP_NAME = 'pet-clinic-java'
+    SCANNER_HOME = tool 'sonar-env'
+    JFROG_CRED = 'jfrog-creds'
+    ARTIFACTPATH = 'target/*.jar'
+    ARTIFACTORY_URL = 'http://3.235.98.37:8082/artifactory'
+    REPO = 'devops'
+    ARTIFACTTARGETPATH = 'release_${BUILD_ID}.jar'
+   }
+   stages{
+        stage('Git Checkout'){
+            steps{
+                git branch: "${BRANCH_NAME}", credentialsId: "${GIT_CRED}", \
+                url: "${GIT_PROJECT_URL}"
+            }
+        }
+
+    stage('codeScan'){
+        steps{
+            sh "trivy fs --format table -o maven_dependency.html ."
+        
+        }
+    }
+    stage('Unit Test'){
+            steps{
+                sh 'mvn clean'
+                sh 'mvn compile -DskiptTests'
+            }
+        }
+        stage('Sonarqube Scan'){
+            steps{
+                withSonarQubeEnv(credentialsId: "${SONAQUBE_CRED}", \
+                installationName: "${SONAQUBE_INSTALLATION}" ) {
+              sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=${APP_NAME} -Dsonar.projectKey=${APP_NAME} \
+                   -Dsonar.java.binaries=. '''
+}
+            }
+        }
+        stage('Quality Gate Check'){
+            steps{
+              script{
+                 waitForQualityGate abortPipeline: false, credentialsId: "${SONAQUBE_CRED}" 
+              }
+            }
+        }
+        stage('Code Package'){
+            steps{
+                sh 'mvn package -DskipTests'
+            }
+        }
+      
+        stage('Upload Jar to Jfrog'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: "${JFROG_CRED}", \
+                 usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    script {
+                        // Define the artifact path and target location
+                        //def artifactPath = 'target/*.jar'
+                        //def targetPath = "release_${BUILD_ID}.jar"
+
+                        // Upload the artifact using curl
+                        sh """
+                            curl -u ${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD} \
+                                 -T ${ARTIFACTPATH} \
+                                 ${ARTIFACTORY_URL}/${REPO}/${ARTIFACTTARGETPATH}
+                        """
+            }
+        }
+    }
+
+}
+    /*
+    stage('DockerLogin'){
+        steps{
+            sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO'
+        }
+    }
+    stage('dockerImageBuild'){
+        steps{
+            sh 'docker build -t jenkins-ci .'
+            sh ' docker build -t imageversion .'
+    }
+}
+  stage('dockerImageTag'){
+        steps{
+            sh 'docker tag jenkins-ci:latest $IMAGE_ECR_REPO:latest'
+            sh 'docker tag imageversion $IMAGE_ECR_REPO:v1.$BUILD_NUMBER'
+        }
+    }
+    stage('PushImage'){
+        steps{
+            sh 'docker push $IMAGE_ECR_REPO:latest'
+            sh 'docker push $IMAGE_ECR_REPO:v1.$BUILD_NUMBER'
+        }
+    }
+
+    */
+   }
+}

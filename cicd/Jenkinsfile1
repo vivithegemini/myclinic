@@ -9,6 +9,11 @@ pipeline {
     BRANCH_NAME = 'main'
     GIT_PROJECT_URL = 'https://github.com/vivithegemini/myclinic.git'
     GIT_CRED = 'github-creds'
+    SONAQUBE_CRED = 'sonarqube-credes'
+    SONAQUBE_INSTALLATION = 'sonar-env'
+    SCANNER_HOME = tool 'sonar'
+    APP_NAME = 'pipeline-pet-clinic-vivi'
+
 
   }
   stages{
@@ -27,6 +32,15 @@ pipeline {
             steps{
                 sh 'mvn clean'
                 sh 'mvn compile -DskipTests'
+            }
+        }
+        stage('Sonarqube Scan'){
+            steps{
+                withSonarQubeEnv(credentialsId: "${SONAQUBE_CRED}", \
+                installationName: "${SONAQUBE_INSTALLATION}" ) {
+              sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=${APP_NAME} -Dsonar.projectKey=${APP_NAME} \
+                   -Dsonar.java.binaries=. '''
+}
             }
         }
   }
